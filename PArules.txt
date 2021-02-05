@@ -1,0 +1,533 @@
+CyberHawk's Palo Alto plan
+##########################################################
+##########################################################
+#####						     #####
+##### MANAGEMENT IP PORT : 172.20.242.150            #####
+##### Netmask : 255.255.255.0			     ##### 
+##### Default User/Password : admin/changeme         #####
+##### Default Gateway : 172.20.242.1                 #####
+##### DNS server Address: windows 2012/Ubuntu Server #####
+#####                                                #####
+##########################################################
+##########################################################
+#####
+#####
+###########################
+###########################
+#####                 #####
+##### !!!CLI stuff!!! #####
+#####                 #####
+###########################
+###########################
+#####
+#####
+#################################################
+##### Change Admin password: Th3w4y1sb4rr3d #####
+#################################################
+configure
+set mgt-config users admin password
+Th3w4y1sb4rr3d
+Th3w4y1sb4rr3d
+commit
+#######################################
+##### Delete user "administrator" #####
+#######################################
+delete mgt-config users administrator 
+commit
+#################################################################
+##### Download Updates (requires leaving configuration mode)#####
+#################################################################
+exit
+request system software check
+request system software download version 8.1.0
+request content upgrade check
+#################################
+##### Check update progress #####
+#################################
+show jobs id <jobs ID>
+##########################################
+##### Download/Install PANOS updates #####
+##########################################
+request system software download version 8.1.13
+request content upgrade check
+request content upgrade download latest
+request content ungrade install version latest
+request system software install version 8.1.13
+####################################################
+##### Reboot Palo Alto (services will go down) #####
+####################################################
+request restart system
+##############################################################################
+##### remove NAT mapping between PA management port and external network #####
+##############################################################################
+configure
+delete rulebase nat rules PA
+commit
+###########################################################################
+##### Add gimped management profile to replace insecure initial config#####
+###########################################################################
+set network profiles interface-management-profile ping ping yes
+#######################################
+##### Replace management profiles #####
+#######################################
+set network interface ethernet ethernet1/1 layer3 interface-management-profile ping
+set network interface ethernet ethernet1/2 layer3 interface-management-profile ping
+set network interface ethernet ethernet1/3 layer3 interface-management-profile ping
+set network interface ethernet ethernet1/4 layer3 interface-management-profile ping
+######################################################################
+##### Limit services/IPs with access to the management interface #####
+######################################################################
+set deviceconfig system permitted-ip 172.20.242.0/24
+set deviceconfig system service disable-http yes
+set deviceconfig system service disable-telnet yes
+set deviceconfig system service disable-snmp yes
+set deviceconfig system service disable-icmp yes
+set deviceconfig system service disable-ssh yes
+set deviceconfig system ip-address 172.20.242.0/24
+set deviceconfig system snmp-setting snmp-system
+commit
+#####
+#####
+###########################
+###########################
+#####                 #####
+##### !!!GUI stuff!!! #####
+#####                 #####
+###########################
+###########################
+#####
+#####
+network > zone security profiles (?)
+#####
+refine mgmt config (?)
+#####
+Objects > Application Filters > delete "Garcia loves chunkymonkey" 
+#####
+Objects > GlobalProtect > HIP Objects > delete "Brian"
+#####
+Objects > Custom Objects > Data Pattern > delete > "backup"
+#####
+Objects > Custom Objects> Vulnerability > delete "Bruteforce Protection"
+#####
+Network > DHCP > delete all DHCP entries
+#####
+Network > DNS Proxy > delete "Mark"
+#####
+Network > MDM > delete "Travis"
+#####
+Device > Dynamic Updates > "Check now" > Latest "Antivirus,Applications and Threats" Download > Install
+commit
+#####
+#####
+###########################
+###########################
+#####                 #####
+##### !!!CLI stuff!!! #####
+#####                 #####
+###########################
+###########################
+#####
+##########################################################
+##### Scripting mode: set cli scripting-mode on      #####
+##### Scripting mode off: set cli scripting-mode off #####
+##########################################################
+#####
+############################
+##### Set Firewall DNS #####
+############################
+configure
+set deviceconfig system dns-setting servers primary 8.8.8.8
+set deviceconfig system dns-setting servers primary 172.20.242.200
+################################
+##### Verify Update Server #####
+################################
+set deviceconfig system server-verification yes
+##########################
+##### Set NTP Server #####
+##########################
+set deviceconfig system ntp-servers primary-ntp-server ntp-server-address 172.20.242.200
+set deviceconfig system ntp-servers primary-ntp-server authentication-type none
+#################################
+##### Splunk Shared logging #####
+#################################
+set shared log-settings syslog Splunk-Syslog server 172.20.241.20 transport TCP
+set shared log-settings syslog Splunk-Syslog server 172.20.241.20 port 7770
+set shared log-settings syslog Splunk-Syslog server 172.20.241.20 format BSD
+set shared log-settings syslog Splunk-Syslog server 172.20.241.20 server 172.20.241.20
+set shared log-settings syslog Splunk-Syslog server 172.20.241.20 facility LOG_USER
+set shared log-settings profiles default match-list default send-syslog Splunk-Syslog
+set shared log-settings profiles default match-list default log-type traffic
+set shared log-settings profiles default match-list default filter "All Logs"
+set shared log-settings profiles default description Splunk
+set shared log-settings system match-list Just-Gonna-Send-It send-syslog Splunk-Syslog
+set shared log-settings system match-list Just-Gonna-Send-It filter "All Logs"
+#######################
+##### DHCP Setup ######
+#######################
+set network dhcp interface ethernet1/4 server option lease timeout 1440
+set network dhcp interface ethernet1/4 server option gateway 172.20.242.254
+set network dhcp interface ethernet1/4 server option dns primary 172.20.241.27
+set network dhcp interface ethernet1/4 server option dns secondary 172.20.240.23
+set network dhcp interface ethernet1/4 server ip-pool 172.20.242.101-172.20.242.150
+set network dhcp interface ethernet1/4 server mode disabled
+set network dhcp interface ethernet1/4 server probe-ip yes
+set network dhcp interface ethernet1/1 server option lease timeout 1440
+set network dhcp interface ethernet1/1 server option gateway 172.20.241.254
+set network dhcp interface ethernet1/1 server ip-pool 172.20.241.101-172.20.241.150
+set network dhcp interface ethernet1/1 server mode disabled
+set network dhcp interface ethernet1/1 server probe-ip yes
+set network dhcp interface ethernet1/2 server option lease timeout 1440
+set network dhcp interface ethernet1/2 server option gateway 172.20.240.254
+set network dhcp interface ethernet1/2 server ip-pool 172.20.240.101-172.20.240.150
+set network dhcp interface ethernet1/2 server mode disabled
+set network dhcp interface ethernet1/2 server probe-ip yes
+###############################
+##### Network DHCP Setup ######
+###############################
+set address Docker ip-netmask 172.20.240.10
+set address Docker description Docker
+set address Debian ip-netmask 172.20.240.20
+set address Debian description Debian
+set address Ubuntu ip-netmask 172.20.242.10
+set address Ubuntu description Ubuntu
+set address Windows2012 ip-netmask 172.20.242.200
+set address Windows2012 description "Windows 2012"
+set address UbuntuWorkstation ip-netmask 172.20.242.100
+set address UbuntuWorkstation description "Ubuntu Workstation"
+set address Splunk ip-netmask 172.20.241.20
+set address Splunk description Splunk
+set address CentOS ip-netmask 172.20.241.30
+set address CentOS description CentOS
+set address Fedora ip-netmask 172.20.241.40
+set address Fedora description "M'Lady"
+set address PA ip-netmask 172.20.242.150
+################################
+##### Splunk DHCP settings #####
+################################
+set service splunk8089 protocol tcp port 8089
+set service Splunk8000 protocol tcp port 8000
+set service Splunk8000 description "Web page for splunk"
+set service splunk8065 protocol tcp port 8065
+set service splunk8191 protocol tcp port 8191
+set service splunk7000 protocol tcp port 7000
+set service splunk8008 protocol tcp port 8008
+set service splunk7070 protocol tcp port 7070
+set service splunk7770 protocol tcp port 7770
+###########################
+##### Palo Alto Rules #####
+###########################
+set rulebase security rules PA to any
+set rulebase security rules PA from any
+set rulebase security rules PA source [ 172.20.242.150 PA ]
+set rulebase security rules PA destination any
+set rulebase security rules PA source-user any
+set rulebase security rules PA category any
+set rulebase security rules PA application [ dns ntp paloalto-logging-service paloalto-shared-services paloalto-updates ]
+set rulebase security rules PA service application-default
+set rulebase security rules PA hip-profiles any
+set rulebase security rules PA action allow
+set rulebase security rules PA log-setting default
+###########################
+##### CentOS IN rules #####
+###########################
+set rulebase security rules Cent-In to Public
+set rulebase security rules Cent-In from [ External Internal Public User ]
+set rulebase security rules Cent-In source any
+set rulebase security rules Cent-In destination [ 172.25.24.11 CentOS ]
+set rulebase security rules Cent-In source-user any
+set rulebase security rules Cent-In category any
+set rulebase security rules Cent-In application any
+set rulebase security rules Cent-In service [ service-http service-https ]
+set rulebase security rules Cent-In hip-profiles any
+set rulebase security rules Cent-In action allow
+#########################
+##### DNS Out Rules #####
+#########################
+set rulebase security rules DNS_Out to External
+set rulebase security rules DNS_Out from [ External Internal Public User ]
+set rulebase security rules DNS_Out source any
+set rulebase security rules DNS_Out destination any
+set rulebase security rules DNS_Out source-user any
+set rulebase security rules DNS_Out category any
+set rulebase security rules DNS_Out application dns
+set rulebase security rules DNS_Out service application-default
+set rulebase security rules DNS_Out hip-profiles any
+set rulebase security rules DNS_Out action allow
+##################################
+##### Windows 2012 NTP Rules #####
+##################################
+set rulebase security rules DNS_NTP_Allto2012 to User
+set rulebase security rules DNS_NTP_Allto2012 from [ External Internal Public User ]
+set rulebase security rules DNS_NTP_Allto2012 source any
+set rulebase security rules DNS_NTP_Allto2012 destination Windows2012
+set rulebase security rules DNS_NTP_Allto2012 source-user any
+set rulebase security rules DNS_NTP_Allto2012 category any
+set rulebase security rules DNS_NTP_Allto2012 application [ active-directory dns ldap ms-ds-smb msrpc netbios-ss ntp ping ]
+set rulebase security rules DNS_NTP_Allto2012 service application-default
+set rulebase security rules DNS_NTP_Allto2012 hip-profiles any
+set rulebase security rules DNS_NTP_Allto2012 action allow
+set rulebase security rules DNS_NTP_Allto2012 description DNS,NTP,AD,LDAP
+############################
+##### Google DNS Rules #####
+############################
+set rulebase security rules Google-DNS from any
+set rulebase security rules Google-DNS source any
+set rulebase security rules Google-DNS destination [ 8.8.4.4 8.8.8.8 ]
+set rulebase security rules Google-DNS source-user any
+set rulebase security rules Google-DNS category any
+set rulebase security rules Google-DNS application [ dns ping ]
+set rulebase security rules Google-DNS service application-default
+set rulebase security rules Google-DNS hip-profiles any
+set rulebase security rules Google-DNS action allow
+############################
+##### Splunk Out Rules #####
+############################
+#NOT WORKING?set rulebase security rules Splunk-Out from Public
+set rulebase security rules Splunk-Out source Splunk
+set rulebase security rules Splunk-Out destination any
+set rulebase security rules Splunk-Out source-user any
+set rulebase security rules Splunk-Out category any
+set rulebase security rules Splunk-Out application any
+set rulebase security rules Splunk-Out service [ splunk7000 splunk7070 Splunk8000 splunk8008 splunk8065 splunk8089 splunk8191 ]
+set rulebase security rules Splunk-Out hip-profiles any
+set rulebase security rules Splunk-Out action allow
+######################
+##### PING rules #####
+######################
+set rulebase security rules PING to any
+set rulebase security rules PING from any
+set rulebase security rules PING source any
+set rulebase security rules PING destination any
+set rulebase security rules PING source-user any
+set rulebase security rules PING category any
+set rulebase security rules PING application ping
+set rulebase security rules PING service application-default
+set rulebase security rules PING hip-profiles any
+set rulebase security rules PING action allow
+###############################
+##### All to Splunk rules #####
+###############################
+set rulebase security rules All_to_Splunk to Public
+set rulebase security rules All_to_Splunk from any
+set rulebase security rules All_to_Splunk source any
+set rulebase security rules All_to_Splunk destination Splunk
+set rulebase security rules All_to_Splunk source-user any
+set rulebase security rules All_to_Splunk category any
+set rulebase security rules All_to_Splunk application any
+set rulebase security rules All_to_Splunk service [ service-http service-https splunk7000 splunk7070 Splunk8000 splunk8008 splunk8065 splunk8089 splunk8191 ]
+set rulebase security rules All_to_Splunk hip-profiles any
+set rulebase security rules All_to_Splunk action allow
+###################################
+##### Ubuntu Server out rules #####
+###################################
+set rulebase security rules UbuntuOutWeb to External
+set rulebase security rules UbuntuOutWeb from User
+set rulebase security rules UbuntuOutWeb source Ubuntu
+set rulebase security rules UbuntuOutWeb destination any
+set rulebase security rules UbuntuOutWeb source-user any
+set rulebase security rules UbuntuOutWeb category any
+set rulebase security rules UbuntuOutWeb application [ apt-get ]
+set rulebase security rules UbuntuOutWeb service application-default
+set rulebase security rules UbuntuOutWeb hip-profiles any
+set rulebase security rules UbuntuOutWeb action allow
+############################
+##### Debian out rules #####
+############################
+set rulebase security rules DebianOutWeb to External
+set rulebase security rules DebianOutWeb from Internal
+set rulebase security rules DebianOutWeb source Debian
+set rulebase security rules DebianOutWeb destination any
+set rulebase security rules DebianOutWeb source-user any
+set rulebase security rules DebianOutWeb category any
+set rulebase security rules DebianOutWeb application [ apt-get]
+set rulebase security rules DebianOutWeb service application-default
+set rulebase security rules DebianOutWeb hip-profiles any
+set rulebase security rules DebianOutWeb action allow
+#################################
+##### Application filtering #####
+#################################
+set rulebase security rules WebForAll to any
+set rulebase security rules WebForAll from any
+set rulebase security rules WebForAll source any
+set rulebase security rules WebForAll destination any
+set rulebase security rules WebForAll source-user any
+set rulebase security rules WebForAll category any
+set rulebase security rules WebForAll application any
+set rulebase security rules WebForAll service [ service-http service-https ]
+set rulebase security rules WebForAll hip-profiles any
+set rulebase security rules WebForAll action allow
+set rulebase security rules WebForAll log-start yes
+set rulebase security rules WebForAll log-setting default
+set rulebase security rules WebForAll profile-setting profiles url-filtering Strict
+set rulebase security rules WebForAll profile-setting profiles file-blocking "strict file blocking"
+set rulebase security rules WebForAll profile-setting profiles virus default
+set rulebase security rules WebForAll profile-setting profiles spyware strict
+set rulebase security rules WebForAll profile-setting profiles vulnerability strict
+set rulebase security rules WebForAll profile-setting profiles wildfire-analysis default
+############################
+##### CentOS out rules #####
+############################
+set rulebase security rules CentWebOut to External
+set rulebase security rules CentWebOut from Public
+set rulebase security rules CentWebOut source CentOS
+set rulebase security rules CentWebOut destination any
+set rulebase security rules CentWebOut source-user any
+set rulebase security rules CentWebOut category any
+set rulebase security rules CentWebOut application [ ping yum ]
+set rulebase security rules CentWebOut service application-default
+set rulebase security rules CentWebOut hip-profiles any
+set rulebase security rules CentWebOut action allow
+########################
+##### DNS in rules #####
+########################
+set rulebase security rules DNS-IN to User
+set rulebase security rules DNS-IN from External
+set rulebase security rules DNS-IN source any
+set rulebase security rules DNS-IN destination [ Ubuntu Windows2012 ]
+set rulebase security rules DNS-IN source-user any
+set rulebase security rules DNS-IN category any
+set rulebase security rules DNS-IN application dns
+set rulebase security rules DNS-IN service application-default
+set rulebase security rules DNS-IN hip-profiles any
+set rulebase security rules DNS-IN action allow
+############################
+##### Fedora out rules #####
+############################
+set rulebase security rules Fedora-Out to External
+set rulebase security rules Fedora-Out from Public
+set rulebase security rules Fedora-Out source Fedora
+set rulebase security rules Fedora-Out destination any
+set rulebase security rules Fedora-Out source-user any
+set rulebase security rules Fedora-Out category any
+set rulebase security rules Fedora-Out application [ ping yum ]
+set rulebase security rules Fedora-Out service application-default
+set rulebase security rules Fedora-Out hip-profiles any
+set rulebase security rules Fedora-Out action allow
+################################
+##### Splunk web out rules #####
+################################
+set rulebase security rules SplunkWebOut to External
+set rulebase security rules SplunkWebOut from Public
+set rulebase security rules SplunkWebOut source Splunk
+set rulebase security rules SplunkWebOut destination any
+set rulebase security rules SplunkWebOut source-user any
+set rulebase security rules SplunkWebOut category any
+set rulebase security rules SplunkWebOut application [ apt-get ping ]
+set rulebase security rules SplunkWebOut service application-default
+set rulebase security rules SplunkWebOut hip-profiles any
+set rulebase security rules SplunkWebOut action allow
+######################################
+##### Windows 2012 Web out rules #####
+######################################
+set rulebase security rules Windows2012Out to External
+set rulebase security rules Windows2012Out from User
+set rulebase security rules Windows2012Out source Windows2012
+set rulebase security rules Windows2012Out destination any
+set rulebase security rules Windows2012Out source-user any
+set rulebase security rules Windows2012Out category any
+set rulebase security rules Windows2012Out application any
+set rulebase security rules Windows2012Out service application-default
+set rulebase security rules Windows2012Out hip-profiles any
+set rulebase security rules Windows2012Out action allow
+set rulebase security rules Windows2012Out disabled yes
+######################################
+##### Docker Web out rules ###########
+######################################
+set rulebase security rules DockerOut to External
+set rulebase security rules DockerOut from User
+set rulebase security rules DockerOut source Docker
+set rulebase security rules DockerOut destination any
+set rulebase security rules DockerOut source-user any
+set rulebase security rules DockerOut category any
+set rulebase security rules DockerOut application any
+set rulebase security rules DockerOut service application-default
+set rulebase security rules DockerOut hip-profiles any
+set rulebase security rules DockerOut action allow
+set rulebase security rules DockerOut disabled yes
+############################################
+##### Ubutnu Workstation web out rules #####
+############################################
+set rulebase security rules UbuntuOutWeb to External
+set rulebase security rules UbuntuOutWeb from Internal
+set rulebase security rules UbuntuOutWeb source Ubuntu
+set rulebase security rules UbuntuOutWeb destination any
+set rulebase security rules UbuntuOutWeb source-user any
+set rulebase security rules UbuntuOutWeb category any
+set rulebase security rules UbuntuOutWeb application [ apt-get ]
+set rulebase security rules UbuntuOutWeb service application-default
+set rulebase security rules UbuntuOutWeb hip-profiles any
+set rulebase security rules UbuntuOutWeb action allow
+#########################
+##### Fedora to all #####
+#########################
+set rulebase security rules Fedora_To_All to [ External Internal Public User ]
+set rulebase security rules Fedora_To_All from Public
+set rulebase security rules Fedora_To_All source Fedora
+set rulebase security rules Fedora_To_All destination any
+set rulebase security rules Fedora_To_All source-user any
+set rulebase security rules Fedora_To_All category any
+set rulebase security rules Fedora_To_All application [ imap pop3 smtp ssl ]
+set rulebase security rules Fedora_To_All service application-default
+set rulebase security rules Fedora_To_All hip-profiles any
+set rulebase security rules Fedora_To_All action allow
+#############################
+##### Mail for everyone #####
+#############################
+set rulebase security rules Mail-To-All to Public
+set rulebase security rules Mail-To-All from [ Internal Public User ]
+set rulebase security rules Mail-To-All source any
+set rulebase security rules Mail-To-All destination Fedora
+set rulebase security rules Mail-To-All source-user any
+set rulebase security rules Mail-To-All category any
+set rulebase security rules Mail-To-All application [ imap pop3 smtp ssl ]
+set rulebase security rules Mail-To-All service application-default
+set rulebase security rules Mail-To-All hip-profiles any
+set rulebase security rules Mail-To-All action allow
+################################
+##### Fedora mail in rules #####
+################################
+set rulebase security rules FedoraMail-IN to Public
+set rulebase security rules FedoraMail-IN from [ External Internal Public User ]
+set rulebase security rules FedoraMail-IN source any
+set rulebase security rules FedoraMail-IN destination [ 172.25.24.39 Fedora ]
+set rulebase security rules FedoraMail-IN source-user any
+set rulebase security rules FedoraMail-IN category any
+set rulebase security rules FedoraMail-IN application [ imap pop3 smtp ssl ]
+set rulebase security rules FedoraMail-IN service application-default
+set rulebase security rules FedoraMail-IN hip-profiles any
+set rulebase security rules FedoraMail-IN action allow
+##################################
+##### CentOS to debian rules######
+##################################
+set rulebase security rules Cent-To-Deb to Internal
+set rulebase security rules Cent-To-Deb from Public
+set rulebase security rules Cent-To-Deb source CentOS
+set rulebase security rules Cent-To-Deb destination Debian
+set rulebase security rules Cent-To-Deb source-user any
+set rulebase security rules Cent-To-Deb category any
+set rulebase security rules Cent-To-Deb application mysql
+set rulebase security rules Cent-To-Deb service application-default
+set rulebase security rules Cent-To-Deb hip-profiles any
+set rulebase security rules Cent-To-Deb action allow
+###################################
+##### Database Security rules #####
+###################################
+set rulebase security rules any2any disabled yes
+delete rulebase security rules PUBLIC2EXTERNAL
+delete rulebase security rules PUBLIC2INTERNAL
+delete rulebase security rules INTERNAL2PUBLIC
+##################
+##### Extras #####
+##################
+#set rulebase security rules PA-Splunk to any
+#set rulebase security rules PA-Splunk from any
+#set rulebase security rules PA-Splunk source [ PA Splunk ]
+#set rulebase security rules PA-Splunk destination [ PA Splunk ]
+#set rulebase security rules PA-Splunk source-user any
+#set rulebase security rules PA-Splunk category any
+#set rulebase security rules PA-Splunk application any
+#set rulebase security rules PA-Splunk service any
+#set rulebase security rules PA-Splunk hip-profiles any
+#set rulebase security rules PA-Splunk action allow
+#set rulebase security rules PA-Splunk log-setting default
+
