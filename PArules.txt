@@ -97,7 +97,10 @@ commit
 ###########################
 #####
 #####
-network > zone security profiles (?)
+network > zone protection > Add (InternalSec, PublicSec)
+*Flood Defaults:* SYN.UDP.ICMP,ICMPv6,Other IP. 
+*Recon Prot:* TCP, Host, UDP Block IP 3600. 
+*Packet Based Prot:*  IP DROP: Spoofed (InternalSec only), Strict source, Loose Source, Unkown, Malformed  TCP DROP: everything but TCP fast open
 #####
 refine mgmt config (?)
 #####
