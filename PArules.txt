@@ -116,9 +116,11 @@ Network > DNS Proxy > delete "Mark"
 Network > MDM > delete "Travis"
 #####
 Objects > Addresses > delete "google"
+#####
 Device > Dynamic Updates > "Check now" > Latest "Antivirus,Applications and Threats" Download > Install
 commit
 #####
+Policies > security > Intrazone-default, Inerzone -default > Override > Deny, log at end
 #####
 ###########################
 ###########################
