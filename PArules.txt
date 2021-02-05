@@ -234,7 +234,7 @@ set rulebase security rules PA log-setting default
 set rulebase security rules Cent-In to Public
 set rulebase security rules Cent-In from [ External Internal Public User ]
 set rulebase security rules Cent-In source any
-set rulebase security rules Cent-In destination [ 172.25.24.11 CentOS ]
+set rulebase security rules Cent-In destination [ 172.25.26.11 CentOS ]
 set rulebase security rules Cent-In source-user any
 set rulebase security rules Cent-In category any
 set rulebase security rules Cent-In application any
@@ -285,6 +285,7 @@ set rulebase security rules NTP_AlltoDebian description NTP
 ###############################
 ##### Cloudfire DNS Rules #####
 ###############################
+set rulebase security rules Cloudfire-DNS to any
 set rulebase security rules Cloudfire-DNS from any
 set rulebase security rules Cloudfire-DNS source any
 set rulebase security rules Cloudfire-DNS destination [ 1.1.1.1 1.0.0.1 ]
@@ -504,7 +505,7 @@ set rulebase security rules Mail-To-All action allow
 set rulebase security rules FedoraMail-IN to Public
 set rulebase security rules FedoraMail-IN from [ External Internal Public User ]
 set rulebase security rules FedoraMail-IN source any
-set rulebase security rules FedoraMail-IN destination [ 172.25.24.39 Fedora ]
+set rulebase security rules FedoraMail-IN destination [ 172.25.26.39 Fedora ]
 set rulebase security rules FedoraMail-IN source-user any
 set rulebase security rules FedoraMail-IN category any
 set rulebase security rules FedoraMail-IN application [ imap pop3 smtp ssl ]
