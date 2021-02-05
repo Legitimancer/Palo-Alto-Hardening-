@@ -298,7 +298,8 @@ set rulebase security rules Cloudfire-DNS action allow
 ############################
 ##### Splunk Out Rules #####
 ############################
-#NOT WORKING?set rulebase security rules Splunk-Out from Public
+set rulebase security rules Splunk-Out to any
+set rulebase security rules Splunk-Out from Public
 set rulebase security rules Splunk-Out source Splunk
 set rulebase security rules Splunk-Out destination any
 set rulebase security rules Splunk-Out source-user any
