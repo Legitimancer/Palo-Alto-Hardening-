@@ -263,7 +263,7 @@ set rulebase security rules DNS_Allto2012 source any
 set rulebase security rules DNS_Allto2012 destination Windows2012
 set rulebase security rules DNS_Allto2012 source-user any
 set rulebase security rules DNS_Allto2012 category any
-set rulebase security rules DNS_Allto2012 application [ active-directory dns ldap ms-ds-smb msrpc netbios-ss ping ]
+set rulebase security rules DNS_Allto2012 application [ active-directory dns ldap ms-ds-smb msrpc netbios-ss ping kerberos ms-netlogon netbios-ns netbios-dg ]
 set rulebase security rules DNS_Allto2012 service application-default
 set rulebase security rules DNS_Allto2012 hip-profiles any
 set rulebase security rules DNS_Allto2012 action allow
